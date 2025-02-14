@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tabela Dinâmica</title>
+  <title>Ordenar tabela cebraspe</title>
   <style>
     table {
       width: 100%;
@@ -63,6 +63,11 @@ function gerarTabela() {
   let thead = tabela.createTHead();
   let headerRow = thead.insertRow();
 
+  // Adiciona a coluna numerada no início
+  let numeroTh = document.createElement("th");
+  numeroTh.textContent = "#";
+  headerRow.appendChild(numeroTh);
+
   // Cria os th com um container interno para alinhar o texto e o checkbox
   for (let i = 0; i < maxColunas; i++) {
     let th = document.createElement("th");
@@ -91,6 +96,10 @@ function gerarTabela() {
     let palavras = linha.split(',').map(p => p.trim()).filter(p => p);
     let tr = tbody.insertRow();
     
+    // Adiciona a célula numerada no início
+    let numeroTd = tr.insertCell(0);
+    numeroTd.textContent = ""; // Inicialmente vazia
+
     // Preenche as células com as palavras da entrada
     for (let i = 0; i < maxColunas; i++) {
       let td = tr.insertCell();
@@ -125,7 +134,10 @@ function mostrarCheckbox() {
         // Define o estado inicial do checkbox com base no que foi armazenado
         checkbox.checked = checkboxesEstado[index] || false;
         // Sempre que o checkbox mudar de estado, recalcula as notas e reordena a tabela
-        checkbox.addEventListener("change", recalcularNotaFinal);
+        checkbox.addEventListener("change", function() {
+          recalcularNotaFinal();
+          atualizarNumerosLinhas();
+        });
         container.appendChild(checkbox);
       }
     }
@@ -136,6 +148,27 @@ function mostrarCheckbox() {
   if (link) {
     link.parentElement.removeChild(link);
   }
+
+  // Atualiza os números das linhas com base no estado das checkboxes
+  atualizarNumerosLinhas();
+}
+
+function atualizarNumerosLinhas() {
+  let tbody = document.querySelector("#tabela tbody");
+  if (!tbody) return;
+
+  // Verifica se pelo menos uma checkbox está marcada
+  let checkboxes = document.querySelectorAll("input[type='checkbox'][data-column]");
+  let peloMenosUmaMarcada = Array.from(checkboxes).some(checkbox => checkbox.checked);
+
+  Array.from(tbody.rows).forEach((row, index) => {
+    let numeroTd = row.cells[0];
+    if (peloMenosUmaMarcada) {
+      numeroTd.textContent = index + 1; // Mostra o número
+    } else {
+      numeroTd.textContent = ""; // Esconde o número
+    }
+  });
 }
 
 function recalcularNotaFinal() {
@@ -151,7 +184,7 @@ function recalcularNotaFinal() {
       if (checkbox.checked) {
         let colIndex = parseInt(checkbox.getAttribute("data-column"));
         // Recupera a célula correspondente na linha
-        let cell = row.cells[colIndex];
+        let cell = row.cells[colIndex + 1]; // +1 para compensar a coluna numerada
         if (cell) {
           // Converte o conteúdo para número; se não for número, considera 0
           let valor = parseFloat(cell.textContent) || 0;
@@ -178,6 +211,9 @@ function recalcularNotaFinal() {
   rowsArray.forEach(row => {
     tbody.appendChild(row);
   });
+
+  // Atualiza os números das linhas após a ordenação
+  atualizarNumerosLinhas();
 }
 
 function editarCabecalho(container) {
