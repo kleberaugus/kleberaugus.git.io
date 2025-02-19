@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ordenar tabela cebraspe</title>
+  <title>Tabela Dinâmica</title>
   <style>
     table {
       width: 100%;
@@ -12,12 +12,12 @@
     th, td {
       border: 1px solid black;
       padding: 8px;
-      text-align: left;
+      text-align: center; /* Centraliza todo o conteúdo da tabela */
     }
     .header-container {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center; /* Centraliza os cabeçalhos */
       width: 100%;
     }
     input[type="text"] {
@@ -25,6 +25,7 @@
       border: none;
       outline: none;
       background: transparent;
+      text-align: center; /* Centraliza o texto digitado nos cabeçalhos */
     }
     .link {
       color: blue;
@@ -35,46 +36,43 @@
     .checkbox-column {
       margin-left: 10px;
     }
-    /* Efeito hover sem animação */
     tbody tr:hover {
-      background-color: #E0E7FF; /* Cor ao passar o mouse */
+      background-color: #E0E7FF;
     }
   </style>
 </head>
 <body>
 
-<textarea id="inputTexto" rows="4" cols="50" placeholder = "Cole aqui a lista de nomes"></textarea>
+<textarea id="inputTexto" rows="4" cols="50" placeholder="Cole aqui a lista de nomes"></textarea>
 <button onclick="gerarTabela()">Gerar Tabela</button>
 <table id="tabela"></table>
 
 <script>
-let checkboxesEstado = {}; // Armazena o estado dos checkboxes (marcado ou desmarcado)
+let checkboxesEstado = {};
+let editandoCabecalho = false;
 
 function gerarTabela() {
   let input = document.getElementById("inputTexto").value;
   let linhas = input.split('/').map(l => l.trim()).filter(l => l);
   let tabela = document.getElementById("tabela");
-  tabela.innerHTML = ""; // Limpa a tabela antes de gerar nova
-
-  // Determina o número máximo de colunas (com base nas vírgulas)
+  tabela.innerHTML = "";
+  
+  // Determina o número máximo de colunas
   let maxColunas = Math.max(...linhas.map(l => l.split(',').length));
-
-  // Cria o cabeçalho da tabela
+  
+  // Cria o cabeçalho
   let thead = tabela.createTHead();
   let headerRow = thead.insertRow();
-
-  // Adiciona a coluna numerada no início
   let numeroTh = document.createElement("th");
   numeroTh.textContent = "#";
   headerRow.appendChild(numeroTh);
 
-  // Cria os th com um container interno para alinhar o texto e o checkbox
   for (let i = 0; i < maxColunas; i++) {
     let th = document.createElement("th");
     let container = document.createElement("div");
     container.className = "header-container";
     container.innerHTML = "Digite aqui  (2 clicks)";
-    // Permite editar com duplo clique
+    // Permite editar o cabeçalho com duplo clique
     container.ondblclick = function() {
       editarCabecalho(container);
     };
@@ -82,7 +80,7 @@ function gerarTabela() {
     headerRow.appendChild(th);
   }
 
-  // Adiciona a coluna fixa "Nota Final" na terceira posição (índice 2)
+  // Insere a coluna fixa "Nota Final" na terceira posição (índice 2)
   let notaFinalTh = document.createElement("th");
   let notaFinalContainer = document.createElement("div");
   notaFinalContainer.className = "header-container";
@@ -95,21 +93,15 @@ function gerarTabela() {
   linhas.forEach((linha, index) => {
     let palavras = linha.split(',').map(p => p.trim()).filter(p => p);
     let tr = tbody.insertRow();
-    
-    // Adiciona a célula numerada no início
     let numeroTd = tr.insertCell(0);
-    numeroTd.textContent = ""; // Inicialmente vazia
-
-    // Preenche as células com as palavras da entrada
+    numeroTd.textContent = "";
     for (let i = 0; i < maxColunas; i++) {
       let td = tr.insertCell();
       td.textContent = palavras[i] || "";
     }
-    
-    // Insere a célula "Nota Final" vazia na terceira posição
     let notaFinalTd = tr.insertCell(2);
     if (index === 0) {
-      // Na primeira linha, insere o link "Clique aqui"
+      // Na primeira linha, insere o link para mostrar os checkboxes
       notaFinalTd.innerHTML = '<span class="link" onclick="mostrarCheckbox()">Clique aqui</span>';
     } else {
       notaFinalTd.textContent = "";
@@ -119,21 +111,17 @@ function gerarTabela() {
 
 function mostrarCheckbox() {
   alert("Selecione as colunas que farão parte da nota final");
-
-  // Seleciona todos os containers internos dos cabeçalhos
+  
   let headerContainers = document.querySelectorAll("th > .header-container");
   headerContainers.forEach((container, index) => {
-    // Pula a coluna "Nota Final" (índice 2)
+    // Ignora a coluna "Nota Final" (índice 2)
     if (index !== 2) {
-      // Pula a criação de checkbox caso já exista um
       if (!container.querySelector("input[type='checkbox']")) {
         let checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.className = "checkbox-column";
         checkbox.setAttribute("data-column", index);
-        // Define o estado inicial do checkbox com base no que foi armazenado
         checkbox.checked = checkboxesEstado[index] || false;
-        // Sempre que o checkbox mudar de estado, recalcula as notas e reordena a tabela
         checkbox.addEventListener("change", function() {
           recalcularNotaFinal();
           atualizarNumerosLinhas();
@@ -142,39 +130,30 @@ function mostrarCheckbox() {
       }
     }
   });
-
-  // Remove o link "Clique aqui" da coluna "Nota Final"
+  
+  // Remove o link "Clique aqui" depois de mostrar os checkboxes
   let link = document.querySelector(".link");
   if (link) {
     link.parentElement.removeChild(link);
   }
-
-  // Atualiza os números das linhas com base no estado das checkboxes
   atualizarNumerosLinhas();
 }
 
 function atualizarNumerosLinhas() {
   let tbody = document.querySelector("#tabela tbody");
   if (!tbody) return;
-
-  // Verifica se pelo menos uma checkbox está marcada
+  
   let checkboxes = document.querySelectorAll("input[type='checkbox'][data-column]");
   let peloMenosUmaMarcada = Array.from(checkboxes).some(checkbox => checkbox.checked);
-
+  
   Array.from(tbody.rows).forEach((row, index) => {
     let numeroTd = row.cells[0];
-    if (peloMenosUmaMarcada) {
-      numeroTd.textContent = index + 1; // Mostra o número
-    } else {
-      numeroTd.textContent = ""; // Esconde o número
-    }
+    numeroTd.textContent = peloMenosUmaMarcada ? index + 1 : "";
   });
 }
 
 function recalcularNotaFinal() {
-  // Seleciona todos os checkboxes com data-column
   let checkboxes = document.querySelectorAll("input[type='checkbox'][data-column]");
-  // Para cada linha do corpo da tabela
   let tbody = document.querySelector("#tabela tbody");
   if (!tbody) return;
   
@@ -183,70 +162,69 @@ function recalcularNotaFinal() {
     checkboxes.forEach(checkbox => {
       if (checkbox.checked) {
         let colIndex = parseInt(checkbox.getAttribute("data-column"));
-        // Recupera a célula correspondente na linha
         let cell = row.cells[colIndex + 1]; // +1 para compensar a coluna numerada
         if (cell) {
-          // Converte o conteúdo para número; se não for número, considera 0
           let valor = parseFloat(cell.textContent) || 0;
           soma += valor;
         }
       }
     });
-    // Atualiza a célula "Nota Final" (posição 2) com a soma calculada
     let notaFinalCell = row.cells[2];
     if (notaFinalCell) {
-      notaFinalCell.textContent = soma;
+      notaFinalCell.textContent = soma.toFixed(2);
     }
   });
   
-  // Ordena as linhas do tbody de forma decrescente com base na coluna "Nota Final"
   let rowsArray = Array.from(tbody.rows);
   rowsArray.sort((a, b) => {
     let notaA = parseFloat(a.cells[2].textContent) || 0;
     let notaB = parseFloat(b.cells[2].textContent) || 0;
-    return notaB - notaA; // Ordenação decrescente
+    return notaB - notaA;
   });
   
-  // Reanexa as linhas no tbody na ordem classificada
   rowsArray.forEach(row => {
     tbody.appendChild(row);
   });
-
-  // Atualiza os números das linhas após a ordenação
+  
   atualizarNumerosLinhas();
 }
 
 function editarCabecalho(container) {
+  if (editandoCabecalho) return;
+  editandoCabecalho = true;
+  
   let input = document.createElement("input");
   input.type = "text";
   input.value = container.textContent.trim() || "Digite aqui  (2 clicks)";
   
-  // Armazena o estado do checkbox antes de editar o cabeçalho
+  // Se houver checkbox, armazena seu estado
   let checkbox = container.querySelector("input[type='checkbox']");
   let checkboxChecked = checkbox ? checkbox.checked : false;
-
-  // Quando o campo perder o foco, o texto é salvo
+  
   input.onblur = function() {
     container.textContent = input.value.trim() || "Digite aqui  (2 clicks)";
-    // Restaura o checkbox com o estado anterior
     if (checkbox) {
       checkbox.checked = checkboxChecked;
       container.appendChild(checkbox);
     }
+    editandoCabecalho = false;
   };
-
-  // Adiciona evento de pressionamento de Enter para perder o foco
+  
   input.addEventListener("keydown", function(event) {
     if (event.key === "Enter") {
-      input.blur();  // Faz o campo perder o foco quando Enter é pressionado
+      input.blur();
     }
   });
-
-  container.textContent = "";  // Limpa o conteúdo original
-  container.appendChild(input);  // Adiciona o campo de input
-  input.focus();  // Foca no input para começar a edição
+  
+  container.textContent = "";
+  container.appendChild(input);
+  input.focus();
 }
 </script>
+
+</body>
+</html>
+
 
 </body>
 </html>
